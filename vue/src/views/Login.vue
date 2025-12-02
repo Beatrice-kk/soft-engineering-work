@@ -9,7 +9,7 @@
         <div class="box-4">
           <div class="title" style="margin-bottom: 10px">
             <p><span class="title-text">软件工程大作业<br><span style="font-size: 40px"></span></span></p>
-            <p><span class="title-text">火航班预订系统<br><span style="font-size: 33px">Train Ticketing System</span></span></p>
+            <p><span class="title-text">机票预订系统<br><span style="font-size: 33px">Train Ticketing System</span></span></p>
           </div>
           <el-form :model="ruleForm" :rules="rules" ref="userForm">
             <el-form-item prop="name">

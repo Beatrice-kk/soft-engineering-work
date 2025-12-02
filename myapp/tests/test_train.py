@@ -5,7 +5,7 @@ from myapp.models import Train, Arrange
 class TrainTests(TestCase):
 
     def setUp(self):
-        # 创建测试列车
+        # 创建测试航班.
         self.train = Train.objects.create(
             f_id='T0001',
             f_s_place='City A',
@@ -24,7 +24,7 @@ class TrainTests(TestCase):
         )
 
     def test_get_train_success(self):
-        # 测试成功获取列车信息
+        # 测试成功获取航班.信息
         response = self.client.get(reverse('get_train'), {
             'start': 'City A',
             'end': 'City B'
@@ -33,7 +33,7 @@ class TrainTests(TestCase):
         self.assertIn('train_list', response.json())
 
     def test_del_train_success(self):
-        # 测试成功删除列车
+        # 测试成功删除航班.
         response = self.client.get(reverse('del_arrange'), {
             'f_id': 'T0001'
         })
@@ -44,7 +44,7 @@ class TrainTests(TestCase):
         })
 
     def test_del_train_not_found(self):
-        # 测试删除不存在的列车
+        # 测试删除不存在的航班.
         response = self.client.get(reverse('del_arrange'), {
             'f_id': 'NON_EXISTENT_TRAIN'
         })

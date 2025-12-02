@@ -9,7 +9,7 @@ class TrainDelayTests(TestCase):
         self.passenger_a = Passenger.objects.create(name='Passenger A')
         self.passenger_b = Passenger.objects.create(name='Passenger B')
 
-        # 创建列车 K123 和 D456
+        # 创建航班. K123 和 D456
         self.train_k123 = Train.objects.create(name='K123', route='Beijing-Tianjin', departure_time='10:00')
         self.train_d456 = Train.objects.create(name='D456', route='Tianjin-Nanjing', departure_time='12:00')
 
@@ -21,7 +21,7 @@ class TrainDelayTests(TestCase):
         self.waiting_list_b = WaitingList.objects.create(passenger=self.passenger_b, train=self.train_k123)
 
     def test_train_delay(self):
-        # 模拟列车 K123 起飞时间推迟 1 小时
+        # 模拟航班. K123 起飞时间推迟 1 小时
         response = self.client.post(reverse('delay_train'), {'train_id': self.train_k123.id, 'delay': 60})
         self.assertEqual(response.status_code, 200)
 
@@ -34,11 +34,11 @@ class TrainDelayTests(TestCase):
         self.waiting_list_b.refresh_from_db()
         self.assertEqual(self.waiting_list_b.train.departure_time, '11:00')
 
-        # 检查列车 D456 的相关换乘影响是否被重新计算
+        # 检查航班. D456 的相关换乘影响是否被重新计算
         self.assertTrue(self.train_d456.recalculate_transfer_impact())
 
     def test_train_delay_no_conflict(self):
-        # 模拟列车 K123 起飞时间推迟 30 分钟，不会影响换乘
+        # 模拟航班. K123 起飞时间推迟 30 分钟，不会影响换乘
         response = self.client.post(reverse('delay_train'), {'train_id': self.train_k123.id, 'delay': 30})
         self.assertEqual(response.status_code, 200)
 
@@ -57,7 +57,7 @@ class TrainDelayTests(TestCase):
         ticket_c1 = Ticket.objects.create(passenger=passenger_c, train=self.train_k123, seat='3C')
         ticket_c2 = Ticket.objects.create(passenger=passenger_c, train=self.train_d456, seat='4D')
 
-        # 模拟列车 K123 起飞时间推迟 1 小时
+        # 模拟航班. K123 起飞时间推迟 1 小时
         response = self.client.post(reverse('delay_train'), {'train_id': self.train_k123.id, 'delay': 60})
         self.assertEqual(response.status_code, 200)
 
@@ -73,7 +73,7 @@ class TrainDelayTests(TestCase):
         self.waiting_list_b.refresh_from_db()
         self.assertEqual(self.waiting_list_b.train.departure_time, '11:00')
 
-        # 检查列车 D456 的相关换乘影响是否被重新计算
+        # 检查航班. D456 的相关换乘影响是否被重新计算
         self.assertTrue(self.train_d456.recalculate_transfer_impact())
 
 class TrainChangeTests(TestCase):
@@ -83,7 +83,7 @@ class TrainChangeTests(TestCase):
         self.passenger_a = Passenger.objects.create(name='Passenger A')
         self.passenger_b = Passenger.objects.create(name='Passenger B')
 
-        # 创建列车 K123 和 D456
+        # 创建航班. K123 和 D456
         self.train_k123 = Train.objects.create(name='K123', route='Beijing-Tianjin', departure_time='10:00')
         self.train_d456 = Train.objects.create(name='D456', route='Tianjin-Nanjing', departure_time='12:00')
 
@@ -185,7 +185,7 @@ class DataConsistencyComplexTests(TestCase):
         self.ticket_a = Ticket.objects.create(passenger=self.passenger_a, train=self.train_k123, seat_type='硬卧', price=500)
 
     def test_train_adjustment(self):
-        # 列车K123的起飞时间提前1小时，新增停站“南京”，减少硬卧20个
+        # 航班.K123的起飞时间提前1小时，新增停站“南京”，减少硬卧20个
         original_departure = self.train_k123.departure_time
         original_stops = self.train_k123.stop_set.count()
         original_hard_sleeper = self.train_k123.seat_set.filter(seat_type='硬卧').count()
@@ -345,7 +345,7 @@ class TicketSupplementPriceAndReceiptTests(TestCase):
         self.ticket_a.supplement_seat(destination='上海')
         self.assertEqual(self.ticket_a.price, original_price + 80)
 
-# 测试列车大规模调整
+# 测试航班.大规模调整
 class TrainLargeScaleAdjustmentTests(TestCase):
 
     def setUp(self):
@@ -354,7 +354,7 @@ class TrainLargeScaleAdjustmentTests(TestCase):
         self.ticket_a = Ticket.objects.create(passenger=self.passenger_a, train=self.train_k123, seat_type='硬卧', origin='北京', destination='天津')
 
     def test_train_adjustment(self):
-        # 列车K123的起飞时间提前1小时，新增停站“南京”，减少硬卧20个
+        # 航班.K123的起飞时间提前1小时，新增停站“南京”，减少硬卧20个
         original_departure = self.train_k123.departure_time
         original_stops = self.train_k123.stop_set.count()
         original_hard_sleeper = self.train_k123.seat_set.filter(seat_type='硬卧').count()
