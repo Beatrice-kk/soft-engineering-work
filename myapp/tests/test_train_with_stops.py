@@ -5,7 +5,7 @@ from myapp.models import Train, Arrange, Stop
 class TrainWithStopsTests(TestCase):
 
     def setUp(self):
-        # 创建测试列车
+        # 创建测试航班.
         self.train = Train.objects.create(
             f_id='T0001',
             f_s_place='City A',
@@ -56,7 +56,7 @@ class TrainWithStopsTests(TestCase):
         })
 
     def test_get_stops_success(self):
-        # 测试成功获取列车的途径点
+        # 测试成功获取航班.的途径点
         Stop.objects.create(train=self.train, stop_name='City C', stop_order=1)
         Stop.objects.create(train=self.train, stop_name='City D', stop_order=2)
 

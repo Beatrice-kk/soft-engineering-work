@@ -15,7 +15,7 @@ class TicketTests(TestCase):
             p_age=30,
             p_card='123456789012345678'
         )
-        # 创建测试列车和安排
+        # 创建测试航班.和安排
         self.train = Train.objects.create(
             f_id='T0001',
             f_s_place='City A',

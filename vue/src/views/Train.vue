@@ -56,7 +56,7 @@
         <el-form-item label="排班编号">
           <el-input v-model="this.select" autocomplete="off" :disabled="true"></el-input>
         </el-form-item>
-        <el-form-item label="起飞机场">
+        <el-form-item label="起始机场">
           <el-input v-model="form.起始机场" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="目的机场">

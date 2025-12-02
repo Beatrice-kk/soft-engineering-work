@@ -9,7 +9,7 @@
   ><!--router实现路由-->
     <div style="height: 90px; line-height: 90px; text-align: center">
       <img src="../../public/plane.png" alt="" style="width: 35px; position: relative; top: 12px; right: 5px;margin-right: 2px">
-      <b style="color: white" >航班预订系统</b>
+      <b style="color: white" >机票预订系统</b>
     </div>
       <el-menu-item index="/home" >
         <template slot="title">

@@ -13,8 +13,8 @@ const routes = [
     children: [
       { path: 'home', name: '系统主页', component: () => import('../views/Home.vue') },
 
-      { path: 'arrange', name: '列车信息', component: () => import('../views/Arrange.vue') },
-      { path: 'arrangetable', name: '增加列车', component: () => import('../views/Arrangetable.vue') },
+      { path: 'arrange', name: '航班信息', component: () => import('../views/Arrange.vue') },
+      { path: 'arrangetable', name: '增加航班', component: () => import('../views/Arrangetable.vue') },
       { path: 'train', name: '排班信息', component: () => import('../views/Train.vue') },
       { path: 'traintable', name: '增加排班', component: () => import('../views/Traintable.vue') },
       { path: 'Ticket', name: '航班信息', component: () => import('../views/Ticket.vue') },
