@@ -75,9 +75,9 @@ INSERT INTO train (f_id, f_s_place, f_e_place, f_s_airfield, f_e_airfield) VALUE
 
 -- Insert data into arrange
 INSERT INTO arrange (a_id, f_id, a_date, a_s_time, a_e_time, price) VALUES
-('A001', 'F001', '2024-11-25', '10:00:00', '13:30:00', 500.00),
-('A002', 'F002', '2024-11-26', '14:00:00', '18:00:00', 350.00),
-('A003', 'F003', '2024-11-27', '08:00:00', '10:00:00', 250.00);
+('A001', 'F001', '2026-1-20', '10:00:00', '13:30:00', 500.00),
+('A002', 'F002', '2026-1-21', '14:00:00', '18:00:00', 350.00),
+('A003', 'F003', '2026-1-22', '08:00:00', '10:00:00', 250.00);
 
 -- Insert data into passenger
 INSERT INTO passenger (p_id, p_name, p_tel, p_sex, p_age, p_card) VALUES
@@ -87,9 +87,9 @@ INSERT INTO passenger (p_id, p_name, p_tel, p_sex, p_age, p_card) VALUES
 
 -- Insert data into ticket
 INSERT INTO ticket (t_id, a_id, t_seat, t_available, p_take, p_pay, t_paytime) VALUES
-('T001', 'A001', '12A', 'Yes', 'Yes', 'Yes', '2024-11-20 09:00:00'),
-('T002', 'A002', '15B', 'No', 'No', 'Yes', '2024-11-21 15:30:00'),
-('T003', 'A003', '7C', 'Yes', 'Yes', 'No', '2024-11-22 10:00:00');
+('T001', 'A001', '12A', 'Yes', 'Yes', 'Yes', '2026-1-13 09:00:00'),
+('T002', 'A002', '15B', 'No', 'No', 'Yes', '2026-1-14 15:30:00'),
+('T003', 'A003', '7C', 'Yes', 'Yes', 'No', '2026-1-15 10:00:00');
 
 -- Insert data into relationships
 INSERT INTO relationships (r_id, p_main, p_related) VALUES

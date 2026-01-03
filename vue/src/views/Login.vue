@@ -12,7 +12,7 @@
           <div class="title-area">
             <h1 class="main-title">软件工程大作业</h1>
             <h2 class="sub-title">机票预订系统</h2>
-            <p class="eng-title">Train Ticketing System</p>
+            <p class="eng-title">Plane Ticketing System</p>
           </div>
 
           <el-form :model="ruleForm" :rules="rules" ref="userForm" class="custom-form">

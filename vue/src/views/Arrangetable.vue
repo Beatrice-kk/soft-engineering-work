@@ -48,22 +48,40 @@
           <el-row :gutter="20">
             <el-col :span="6">
               <el-form-item label="执行日期">
-                <el-date-picker type="date" placeholder="选择日期" v-model="form.date" style="width: 100%" value-format="yyyy-MM-dd"></el-date-picker>
+                <el-date-picker 
+                  type="date" 
+                  placeholder="选择日期" 
+                  v-model="form.date" 
+                  style="width: 100%" 
+                  value-format="yyyy-MM-dd"
+                ></el-date-picker>
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="起飞时间">
-                <el-time-picker placeholder="00:00:00" v-model="form.start" style="width: 100%" value-format="HH:mm:ss"></el-time-picker>
+                <el-time-picker 
+                  placeholder="选择时间" 
+                  v-model="form.start" 
+                  style="width: 100%" 
+                  format="HH:mm:ss"
+                  value-format="HH:mm:ss"
+                ></el-time-picker>
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="到达时间">
-                <el-time-picker placeholder="00:00:00" v-model="form.end" style="width: 100%" value-format="HH:mm:ss"></el-time-picker>
+                <el-time-picker 
+                  placeholder="选择时间" 
+                  v-model="form.end" 
+                  style="width: 100%" 
+                  format="HH:mm:ss"
+                  value-format="HH:mm:ss"
+                ></el-time-picker>
               </el-form-item>
             </el-col>
             <el-col :span="6">
               <el-form-item label="设定票价 (元)">
-                <el-input-number v-model="form.price" :min="0" :precision="2" style="width: 100%" controls-position="right"></el-input-number>
+                <el-input-number v-number v-model="form.price" :min="0" :precision="2" style="width: 100%" controls-position="right"></el-input-number>
               </el-form-item>
             </el-col>
           </el-row>
@@ -92,9 +110,9 @@ export default {
       endPlace: '',
       form: {
         f_id: '',
-        date: '',
-        start: '',
-        end: '',
+        date: null,  // 必须为 null，避免 Invalid Date 报错
+        start: null, // 必须为 null
+        end: null,   // 必须为 null
         price: 500.0,
       }
     }
@@ -110,17 +128,17 @@ export default {
           end: this.endPlace
         }
       }).then(res => {
-        this.tableData = res.train_list
+        this.tableData = res.train_list || [];
       })
     },
     save() {
+      // 严格检查必填项
       if (!this.form.f_id || !this.form.date || !this.form.start || !this.form.end) {
         this.$message.warning("请完整填写所有航班参数");
         return;
       }
       
       this.loading = true;
-      // 直接传递格式化后的字符串，减少后端解析负担，避免 8 小时时区差问题
       this.request.get("/saveArrange/", {
         params: {
           f_id: this.form.f_id,
@@ -131,7 +149,8 @@ export default {
         }
       }).then(response => {
         this.loading = false;
-        if (response.message === 'success' || response.code === 200) {
+        // 兼容不同后端的成功码
+        if (response === 'success' || response.code === '200' || response.code === 200 || response.message === 'success') {
           this.$message.success("航班排班发布成功");
           this.resetForm();
         } else {
@@ -142,16 +161,27 @@ export default {
     reset() {
       this.startPlace = "";
       this.endPlace = "";
+      this.currentRow = null; // 重置选中行
       this.load();
     },
     resetForm() {
-       this.form = { f_id: this.currentRow ? this.currentRow.排班编号 : '', date: '', start: '', end: '', price: 500 };
+      // 发布成功后，清空输入内容，保留当前选中行的ID（如果需要连发）或全部清空
+      this.form = { 
+        f_id: this.currentRow ? this.currentRow.排班编号 : '', 
+        date: null, 
+        start: null, 
+        end: null, 
+        price: 500.0 
+      };
     },
     handleCurrentChange(val) {
-      this.currentRow = val;
-      if(val) {
-        // 注意：此处根据你原始代码，f_id 绑定的是 currentRow.排班编号
+      if (val) {
+        this.currentRow = val;
+        // 切换行时，重置表单避免旧数据的格式干扰
         this.form.f_id = val.排班编号;
+        this.form.date = null;
+        this.form.start = null;
+        this.form.end = null;
       }
     }
   }
@@ -194,16 +224,12 @@ export default {
 }
 .card-title i { margin-right: 8px; color: #409EFF; }
 
-/* 搜索与表格 */
+/* 搜索栏 */
 .search-bar { margin-bottom: 20px; }
 .w-200 { width: 200px !important; }
 .ml-10 { margin-left: 10px; }
-.route-table {
-  border-radius: 8px;
-  border: 1px solid #ebeef5;
-}
 
-/* 排班配置 */
+/* 配置卡片 */
 .config-card {
   background-color: #ffffff;
   border-top: 4px solid #67C23A;
@@ -224,9 +250,8 @@ export default {
   border-radius: 10px;
 }
 
-/* Element UI 覆盖样式 */
-::v-deep .el-table__grow-row { cursor: pointer; }
-::v-deep .current-row > td {
+/* 覆盖 Element UI 选中行样式 */
+::v-deep .el-table__body tr.current-row > td {
   background-color: #ecf5ff !important;
   color: #409EFF;
   font-weight: bold;
