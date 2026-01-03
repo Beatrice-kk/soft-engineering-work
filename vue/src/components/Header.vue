@@ -42,7 +42,7 @@ export default {
   },
   computed:{
     currentPathName(){
-      return this.$store.state.currentPathName;　　//需要监听的数据
+      return this.$store.state.currentPathName;//需要监听的数据
     }
   },
 
