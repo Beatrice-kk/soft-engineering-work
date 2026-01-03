@@ -1,373 +1,219 @@
 <template>
-  <div class="center-2">
-    <div class="box">
-      <div class="box-2">
-        <img src="../../public/background-4.png" alt=""/>
-      </div>
-      <div class="box-3">
-        <img src="../../public/background-3.png" alt=""/>
-      </div>
-      <div class="box-4">
-        <div class="title">
-          <p><span class="title-text" style="margin-bottom: 20px">用 户 注 册</span></p>
-        </div>
+  <div class="register-container">
+    <div class="main-layout">
+      
+      <div class="left-section">
+        <img class="full-bg" src="../../public/background-4.png" alt="Illustration"/>
+        
+        <div class="form-wrapper">
+          <div class="header">
+            <h1 class="page-title">用 户 注 册</h1>
+          </div>
 
-        <!-- Vue 表单代码 -->
-        <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="70px" class="demo-ruleForm">
-          <el-form-item label="用户名" prop="account">
-            <el-input size="medium" placeholder="请确认用户名" v-model="ruleForm.account" ></el-input>
-          </el-form-item>
-          <el-form-item label="密码" prop="pass">
-            <el-input size="medium" type="password" placeholder="请确认密码" v-model="ruleForm.pass"
-                      autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="确认密码" prop="checkPass">
-            <el-input size="medium" type="password" placeholder="请再次确认密码" v-model="ruleForm.checkPass"
-                      autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="真实姓名" prop="name">
-            <el-input size="medium" placeholder="请确认真实姓名" v-model.number="ruleForm.name"></el-input>
-          </el-form-item>
-          <el-form-item label="性别" prop="sex">
-            <div style="margin-top: 4px">
-              <el-radio v-model="ruleForm.sex" label="1" style="margin-right: 10px">男</el-radio>
-              <el-radio v-model="ruleForm.sex" label="2">女</el-radio>
-            </div>
-          </el-form-item>
-          <el-form-item label="年龄" prop="age">
-            <el-input size="medium" placeholder="请确认年龄" v-model.number="ruleForm.age"></el-input>
-          </el-form-item>
-          <el-form-item label="联系电话" prop="phone">
-            <el-input size="medium" placeholder="请确认联系电话" v-model.number="ruleForm.phone"></el-input>
-          </el-form-item>
-          <el-form-item label="身份证号" prop="card">
-            <el-input
-                type="text"
+          <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="85px" class="custom-form">
+            <el-form-item label="用户名" prop="account">
+              <el-input size="medium" placeholder="请输入用户名" v-model="ruleForm.account"></el-input>
+            </el-form-item>
+            
+            <el-form-item label="密码" prop="pass">
+              <el-input size="medium" type="password" placeholder="请输入密码" v-model="ruleForm.pass" autocomplete="off"></el-input>
+            </el-form-item>
+            
+            <el-form-item label="确认密码" prop="checkPass">
+              <el-input size="medium" type="password" placeholder="请再次确认密码" v-model="ruleForm.checkPass" autocomplete="off"></el-input>
+            </el-form-item>
+            
+            <el-form-item label="真实姓名" prop="name">
+              <el-input size="medium" placeholder="请输入真实姓名" v-model="ruleForm.name"></el-input>
+            </el-form-item>
+            
+            <el-form-item label="性别" prop="sex">
+              <el-radio-group v-model="ruleForm.sex" class="white-radio">
+                <el-radio label="1">男</el-radio>
+                <el-radio label="2">女</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            
+            <el-form-item label="年龄" prop="age">
+              <el-input size="medium" placeholder="请输入年龄" v-model.number="ruleForm.age"></el-input>
+            </el-form-item>
+            
+            <el-form-item label="联系电话" prop="phone">
+              <el-input size="medium" placeholder="请输入联系电话" v-model="ruleForm.phone"></el-input>
+            </el-form-item>
+            
+            <el-form-item label="身份证号" prop="card">
+              <el-input
                 size="medium"
-                placeholder="请输入内容"
+                placeholder="请输入身份证号"
                 v-model="ruleForm.card"
                 maxlength="18"
                 show-word-limit
-            ></el-input>
-          </el-form-item>
-        </el-form>
-        <!-- 结束 Vue 表单代码 -->
-        <div class="btn-1">
-          <button id="btn-register" @click="register()">提交注册申请</button>
-        </div>
+              ></el-input>
+            </el-form-item>
+          </el-form>
 
+          <div class="footer-btn">
+            <button class="submit-btn" @click="register">提 交 注 册 申 请</button>
+          </div>
+        </div>
       </div>
+
+      <div class="right-section">
+        <img class="full-bg" src="../../public/background-3.png" alt="Background"/>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script>
-import Vcode from "vue-puzzle-vcode";
-
 export default {
   name: "register",
-  components: {
-    Vcode
-  },
   data() {
-    var validateAccount = (rule, value, callback) => {
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请输入用户名'
-          console.log("请输入用户名")
-        }
-        callback(new Error('请输入用户名'));
-      } else {
-        if (this.errorInfo === '请输入用户名')
-          this.errorInfo = ''
-        callback();
-      }
+    const validateField = (msg) => (rule, value, callback) => {
+      if (!value) {
+        this.errorInfo = msg;
+        callback(new Error(msg));
+      } else { callback(); }
     };
-    var validateName = (rule, value, callback) => {
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请输入真实姓名'
-        }
-        callback(new Error('请输入真实姓名'));
-      } else {
-        if (this.errorInfo === '请输入真实姓名')
-          this.errorInfo = ''
-        callback();
-      }
-    };
-    var validatePass = (rule, value, callback) => {
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请输入密码'
-        }
-        callback(new Error('请输入密码'));
-      } else {
-        if (this.errorInfo === '请输入密码')
-          this.errorInfo = ''
-        callback();
-      }
-    };
-    var validatePass2 = (rule, value, callback) => {
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请再次输入密码'
-        }
+    const validatePass2 = (rule, value, callback) => {
+      if (!value) {
+        this.errorInfo = '请再次输入密码';
         callback(new Error('请再次输入密码'));
       } else if (value !== this.ruleForm.pass) {
-        if (this.errorInfo === '' || this.errorInfo === '请再次输入密码') {
-          this.errorInfo = '两次输入密码不一致'
-        }
-        callback(new Error('两次输入密码不一致'));
-      } else {
-        if (this.errorInfo === '请再次输入密码' || this.errorInfo === '两次输入密码不一致')
-          this.errorInfo = ''
-        callback();
-      }
+        this.errorInfo = '两次密码不一致';
+        callback(new Error('两次密码不一致'));
+      } else { callback(); }
     };
-    var validatePhone = (rule, value, callback) => {
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请输入电话'
-        }
-        callback(new Error('请输入电话'));
-      } else {
-        if (this.errorInfo === '请输入电话')
-          this.errorInfo = ''
-        callback();
-      }
-    };
-    var validateAge = (rule, value, callback) => {
-      const regex = /^\d+$/;
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请输入年龄'
-        }
-        callback(new Error('请输入年龄'));
-      } else if(!regex.test(value)){
-        if (this.errorInfo === '' || this.errorInfo === '请输入年龄') {
-          this.errorInfo = '年龄必须为非负整数'
-        }
-        callback(new Error('年龄必须为非负整数'));
-      } else{
-        if (this.errorInfo === '请输入年龄'|| this.errorInfo === '年龄必须为非负整数')
-          this.errorInfo = ''
-        callback();
-      }
-    };
-    var validateSex = (rule, value, callback) => {
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请选择性别'
-        }
-        callback(new Error('请选择性别'));
-      } else {
-        if (this.errorInfo === '请选择性别')
-          this.errorInfo = ''
-        callback();
-      }
-    };
-    var validateCard = (rule, value, callback) => {
-      if (value === '') {
-        if (this.errorInfo === '') {
-          this.errorInfo = '请输入身份证号'
-        }
-        callback(new Error('请输入身份证号'));
-      } else if (value.length !== 18) {
-        if (this.errorInfo === '' || this.errorInfo === '请输入身份证号') {
-          this.errorInfo = '身份证号不为18位'
-        }
-        callback(new Error('身份证号不为18位'));
-      } else {
-        if (this.errorInfo === '请输入身份证号' || this.errorInfo === '身份证号不为18位')
-          this.errorInfo = ''
-        callback();
-      }
-    };
+
     return {
       errorInfo: '',
       ruleForm: {
-        account: '',
-        pass: '',
-        checkPass: '',
-        card: '',
-        phone: '',
-        age: '',
-        name: '',
-        sex: '',
+        account: '', pass: '', checkPass: '', name: '', sex: '1', age: '', phone: '', card: ''
       },
       rules: {
-        account: [
-          {validator: validateAccount, trigger: 'blur'}
-        ],
-        pass: [
-          {validator: validatePass, trigger: 'blur'}
-        ],
-        checkPass: [
-          {validator: validatePass2, trigger: 'blur'}
-        ],
-        name: [
-          {validator: validateName, trigger: 'blur'}
-        ],
-        sex: [
-          {validator: validateSex, trigger: 'blur'}
-        ],
-        age: [
-          {validator: validateAge, trigger: 'blur'}
-        ],
-        phone: [
-          {validator: validatePhone, trigger: 'blur'}
-        ],
-        card: [
-          {validator: validateCard, trigger: 'blur'}
-        ]
+        account: [{ validator: validateField('请输入用户名'), trigger: 'blur' }],
+        pass: [{ validator: validateField('请输入密码'), trigger: 'blur' }],
+        checkPass: [{ validator: validatePass2, trigger: 'blur' }],
+        name: [{ validator: validateField('请输入姓名'), trigger: 'blur' }],
+        age: [{ validator: validateField('请输入年龄'), trigger: 'blur' }],
+        phone: [{ validator: validateField('请输入电话'), trigger: 'blur' }],
+        card: [{ validator: validateField('请输入身份证号'), trigger: 'blur' }]
       }
     };
   },
   methods: {
     register() {
       this.$refs['ruleForm'].validate((valid) => {
-        if (valid) {  // 表单校验合法
-          console.log("valid!")
-          this.request.post("/register/", this.ruleForm).then(response => {
-            if (response.res === 3) {
-              this.$message.success("新用户注册成功")
-              this.$router.push("/login")
-            } else if (response.res === 2) {
-              this.$message.error("该身份证已被注册")
-            } else if (response.res === 1) {
-              this.$message.error("该用户名已被注册")
+        if (valid) {
+          this.request.post("/register/", this.ruleForm).then(res => {
+            if (res.res === 3) {
+              this.$message.success("注册成功");
+              this.$router.push("/login");
+            } else {
+              this.$message.error(res.res === 1 ? "用户名已占用" : "身份证已占用");
             }
           })
         } else {
-          this.$message.error(this.errorInfo)
+          this.$message.error(this.errorInfo || "请完善表单");
         }
       });
     }
   }
 };
 </script>
-<style>
-.el-form-item label {
-  color: white
-}
-</style>
-
 
 <style scoped>
-* {
+.register-container {
+  width: 100vw;
+  height: 100vh;
   margin: 0;
   padding: 0;
   overflow: hidden;
 }
 
-.box {
+.main-layout {
   display: flex;
-  height: 750px;
-}
-
-.box-2 img {
-  height: 750px;
-  width: 1050px;
-}
-
-.title {
-  font-family: "微软雅黑", Times, serif;
-  text-align: center;
-  position: relative;
-  font-size: 64px;
-  color: #ffffff;
-  margin-bottom: 20px;
-
-}
-
-.form-control {
-  margin-top: 30px;
-  width: 258px;
-  height: 20px;
-  border: 1px solid #ffffff;
-  font-size: 16px;
-  padding: 10px;
-  border-radius: 25px;
-  background-color: transparent;
-}
-
-.form-control:focus {
-  border: 1px solid #ffffff;
-
-}
-
-button#btn-obtain {
-  position: relative;
-  background-color: #31cde2;
-  width: 117px;
-  height: 41px;
-  font-size: 18px;
-  border-radius: 25px;
-  border: none;
-  color: #fff;
-  margin-top: 30px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-button#btn-obtain:hover {
-  background-color: #31cde2;
-}
-
-button#btn-register {
-  position: relative;
-  background-color: #31cde2;
-  width: 266px;
-  height: 41px;
-  font-size: 18px;
-  border-radius: 25px;
-  border: none;
-  color: #fff;
-
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-button#btn-register:hover {
-  background-color: #31cde2;
-}
-
-input#code {
-  width: 133px;
-}
-
-.box-2 {
-  position: relative;
-
-}
-
-.box-4 {
-  position: absolute;
-  top: 48%;
-  left: 23%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-}
-
-.box-3 img {
-  position: relative;
-  max-width: 1000px;
   width: 100%;
-  max-height: 750px;
   height: 100%;
 }
 
-.form-control:focus {
-  border-color: #a6a6a6;
-  outline: none;
+/* 通用背景图设置 */
+.full-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
 }
 
-label.el-form-item__label {
+/* 左侧：背景4 + 表单内容 */
+.left-section {
+  flex: 1.3; 
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-y: auto;
+}
+
+/* 右侧：背景3 (纯背景) */
+.right-section {
+  flex: 1;
+  position: relative;
+}
+
+/* 表单容器样式 */
+.form-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 85%;
+  max-width: 420px;
+  /* 增加轻微半透明背景，确保在复杂插图背景上文字清晰 */
+  background: rgba(0, 0, 0, 0.15);
+  padding: 30px;
+  border-radius: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.page-title {
+  color: #ffffff;
+  font-size: 52px;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 25px;
+  letter-spacing: 4px;
+}
+
+.custom-form >>> .el-form-item__label {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.white-radio >>> .el-radio__label {
+  color: white !important;
+}
+
+.footer-btn {
+  margin-top: 30px;
   text-align: center;
 }
 
-.btn-1 {
+.submit-btn {
+  width: 100%;
+  height: 46px;
+  background-color: #31cde2;
+  border: none;
+  border-radius: 23px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-  text-align: center;
+.submit-btn:hover {
+  background-color: #2bb8cc;
 }
 </style>
