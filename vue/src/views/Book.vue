@@ -80,8 +80,15 @@
 
       <el-table-column label="操作" align="center" width="150">
         <template v-slot="scope">
-          <el-button type="primary" size="small" round icon="el-icon-tickets" @click="handleEdit(scope.row)">
-            立即预订
+          <el-button 
+            type="primary" 
+            size="small" 
+            round 
+            icon="el-icon-tickets" 
+            @click="handleEdit(scope.row)"
+            :disabled="scope.row.剩余 <= 0"
+          >
+            {{ scope.row.剩余 <= 0 ? '已售罄' : '立即预订' }}
           </el-button>
         </template>
       </el-table-column>
@@ -100,7 +107,40 @@
       ></el-pagination>
     </div>
 
-    </div>
+    <el-dialog title="确认订单" :visible.sync="dialogFormVisible" width="450px" center>
+      <div class="booking-dialog-content">
+        <div class="ticket-preview">
+          <div class="preview-row">
+            <span class="label">航班号:</span>
+            <span class="val">{{ form.航班编号 }}</span>
+          </div>
+          <div class="preview-row">
+            <span class="label">航程:</span>
+            <span class="val">{{ form.起始地 }} —— {{ form.目的地 }}</span>
+          </div>
+          <div class="preview-row">
+            <span class="label">日期:</span>
+            <span class="val">{{ form.日期 }} {{ form.起飞时间 }}</span>
+          </div>
+          <div class="preview-row">
+            <span class="label">价格:</span>
+            <span class="val price-color">¥ {{ form.航班价格 }}</span>
+          </div>
+        </div>
+
+        <el-form label-width="80px" style="margin-top: 20px;">
+          <el-form-item label="乘机人">
+            <el-input :value="passengerName" disabled></el-input>
+          </el-form-item>
+        </el-form>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmBooking">提交订单并支付</el-button>
+      </span>
+    </el-dialog>
+
+  </div>
 </template>
 
 <script>
@@ -115,10 +155,9 @@ export default {
       start: "",
       end: "",
       date: "",
-      form: {},
-      passengers: [],
+      form: {}, // 存储选中的航班信息
+      passengerName: "", // 存储查出来的乘客姓名
       dialogFormVisible: false,
-      multipleSelection: [],
       p_id: localStorage.getItem('p_id'),
     }
   },
@@ -136,33 +175,53 @@ export default {
           date: this.date,
         }
       }).then(res => {
-        this.tableData = res.tickets;
-        this.total = res.total;
+        this.tableData = res.tickets || [];
+        this.total = res.total || 0;
       })
     },
     reset() {
       this.start = ""; this.end = ""; this.date = "";
       this.load();
     },
+    // 点击“立即预订”时触发
     handleEdit(row) {
       this.form = row;
+      // 1. 先根据当前登录的 p_id 获取乘客姓名
       this.request.get("/getPassenger/", { params: { p_id: this.p_id } }).then(res => {
-        this.passengers = res.passengers;
+        // 假设返回的 res.passengers 是个对象或者数组
+        const passenger = Array.isArray(res.passengers) ? res.passengers[0] : res.passengers;
+        this.passengerName = passenger ? passenger.p_name : "未知用户";
+        
+        // 2. 显示弹窗
         this.dialogFormVisible = true;
+      }).catch(() => {
+        this.$message.error("无法获取乘客信息，请重新登录");
       });
+    },
+    // 对话框点击“确认支付”时触发
+    confirmBooking() {
+      this.request.get("/saveOrder/", {
+        params: {
+          p_id: this.p_id,
+          f_id: this.form.排班编号, // 注意后端接收的字段名
+          price: this.form.航班价格
+        }
+      }).then(res => {
+        this.$message.success("恭喜！订票成功");
+        this.dialogFormVisible = false;
+        this.load(); // 重新加载列表，更新余票
+      }).catch(err => {
+        this.$message.error("预订失败，请稍后再试");
+      })
     },
     handleSizeChange(pageSize) { this.pageSize = pageSize; this.load(); },
     handleCurrentChange(pageNum) { this.pageNum = pageNum; this.load(); },
-    handleSelectionChange(val) { this.multipleSelection = val; }
   }
 }
 </script>
 
 <style scoped>
-/* 容器背景与基础布局 */
 .book-container { padding: 25px; background-color: #f6f8fb; min-height: 100vh; }
-
-/* 搜索栏布局优化 */
 .search-card { border-radius: 12px; margin-bottom: 20px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 .search-flex-bar { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
 .input-item { width: 180px; }
@@ -170,52 +229,28 @@ export default {
 .date-picker { width: 220px; }
 .button-group { margin-left: auto; }
 
-/* 核心对齐：行程展示 */
-.route-display-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 10px 0;
-}
-
-.route-station {
-  flex: 1; /* 关键：左右两部分平分剩余空间 */
-  display: flex;
-  flex-direction: column;
-}
-
-.departure { text-align: right; } /* 起点文字右对齐，向中心靠拢 */
-.arrival { text-align: left; }    /* 终点文字左对齐，向中心靠拢 */
-
-.station-time { font-size: 26px; font-weight: 800; color: #303133; line-height: 1.1; }
+.route-display-container { display: flex; align-items: center; justify-content: center; width: 100%; padding: 10px 0; }
+.route-station { flex: 1; display: flex; flex-direction: column; }
+.departure { text-align: right; }
+.arrival { text-align: left; }
+.station-time { font-size: 26px; font-weight: 800; color: #303133; }
 .station-name { font-size: 16px; font-weight: 600; color: #444; margin: 4px 0; }
 .airport-info { font-size: 12px; color: #909399; }
 
-/* 中间轴线 */
-.route-axis {
-  width: 110px; /* 固定轴线宽度，确保对齐不抖动 */
-  margin: 0 25px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
+.route-axis { width: 110px; margin: 0 25px; display: flex; flex-direction: column; align-items: center; }
 .axis-tag { font-size: 11px; color: #409EFF; background: #ecf5ff; padding: 2px 8px; border-radius: 10px; margin-bottom: 5px; }
-.axis-line {
-  width: 100%;
-  height: 2px;
-  background: #DCDFE6;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-}
+.axis-line { width: 100%; height: 2px; background: #DCDFE6; position: relative; display: flex; align-items: center; justify-content: flex-end; }
 .arrow { color: #DCDFE6; position: absolute; right: -6px; font-size: 14px; }
 
-/* 其他样式 */
 .flight-table { border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
 .price-value { color: #f5222d; font-size: 22px; font-weight: bold; }
-.flight-no { color: #409EFF; font-weight: bold; font-family: 'Arial'; }
+.flight-no { color: #409EFF; font-weight: bold; }
 .pagination-footer { margin-top: 25px; display: flex; justify-content: flex-end; }
+
+/* 弹窗样式 */
+.ticket-preview { background: #f8f9fb; padding: 15px; border-radius: 8px; }
+.preview-row { margin-bottom: 8px; font-size: 14px; }
+.preview-row .label { color: #909399; width: 60px; display: inline-block; }
+.preview-row .val { color: #303133; font-weight: bold; }
+.price-color { color: #f5222d; font-size: 18px; }
 </style>
