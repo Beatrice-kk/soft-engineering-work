@@ -72,8 +72,8 @@
 
       <el-table-column label="余票状态" width="120" align="center">
         <template slot-scope="scope">
-          <el-tag :type="scope.row.剩余 < 10 ? 'danger' : 'success'" size="small" effect="dark">
-            仅剩 {{ scope.row.剩余 }} 张
+          <el-tag :type="scope.row.剩余 <= 0 ? 'info' : (scope.row.剩余 < 10 ? 'danger' : 'success')" size="small" effect="dark">
+            {{ scope.row.剩余 > 0 ? `仅剩 ${scope.row.剩余} 张` : '已售罄' }}
           </el-tag>
         </template>
       </el-table-column>
@@ -81,10 +81,10 @@
       <el-table-column label="操作" align="center" width="150">
         <template v-slot="scope">
           <el-button 
-            type="primary" 
+            :type="scope.row.剩余 <= 0 ? 'info' : 'primary'" 
             size="small" 
             round 
-            icon="el-icon-tickets" 
+            :icon="scope.row.剩余 <= 0 ? 'el-icon-circle-close' : 'el-icon-tickets'" 
             @click="handleEdit(scope.row)"
             :disabled="scope.row.剩余 <= 0"
           >
@@ -107,7 +107,7 @@
       ></el-pagination>
     </div>
 
-    <el-dialog title="确认订单" :visible.sync="dialogFormVisible" width="450px" center>
+    <el-dialog title="确认订单信息" :visible.sync="dialogFormVisible" width="450px" center>
       <div class="booking-dialog-content">
         <div class="ticket-preview">
           <div class="preview-row">
@@ -116,30 +116,29 @@
           </div>
           <div class="preview-row">
             <span class="label">航程:</span>
-            <span class="val">{{ form.起始地 }} —— {{ form.目的地 }}</span>
+            <span class="val">{{ form.起始地 }} 到 {{ form.目的地 }}</span>
           </div>
           <div class="preview-row">
-            <span class="label">日期:</span>
+            <span class="label">起飞时间:</span>
             <span class="val">{{ form.日期 }} {{ form.起飞时间 }}</span>
           </div>
           <div class="preview-row">
-            <span class="label">价格:</span>
+            <span class="label">应付金额:</span>
             <span class="val price-color">¥ {{ form.航班价格 }}</span>
           </div>
         </div>
 
         <el-form label-width="80px" style="margin-top: 20px;">
           <el-form-item label="乘机人">
-            <el-input :value="passengerName" disabled></el-input>
+            <el-input :value="passengerName" disabled prefix-icon="el-icon-user"></el-input>
           </el-form-item>
         </el-form>
       </div>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="confirmBooking">提交订单并支付</el-button>
+        <el-button type="primary" @click="confirmBooking">立即支付并订票</el-button>
       </span>
     </el-dialog>
-
   </div>
 </template>
 
@@ -155,8 +154,8 @@ export default {
       start: "",
       end: "",
       date: "",
-      form: {}, // 存储选中的航班信息
-      passengerName: "", // 存储查出来的乘客姓名
+      form: {},
+      passengerName: "",
       dialogFormVisible: false,
       p_id: localStorage.getItem('p_id'),
     }
@@ -166,6 +165,7 @@ export default {
   },
   methods: {
     load() {
+      // 此接口需确保后端返回的数据中包含由 count(*) 算出的“剩余”字段
       this.request.get("/getArrange/", {
         params: {
           pageNum: this.pageNum,
@@ -183,74 +183,75 @@ export default {
       this.start = ""; this.end = ""; this.date = "";
       this.load();
     },
-    // 点击“立即预订”时触发
     handleEdit(row) {
       this.form = row;
-      // 1. 先根据当前登录的 p_id 获取乘客姓名
+      // 预订前再次核对余票状态
+      if (row.剩余 <= 0) {
+        this.$message.warning("手慢了！该航班刚刚售罄");
+        this.load();
+        return;
+      }
       this.request.get("/getPassenger/", { params: { p_id: this.p_id } }).then(res => {
-        // 假设返回的 res.passengers 是个对象或者数组
         const passenger = Array.isArray(res.passengers) ? res.passengers[0] : res.passengers;
-        this.passengerName = passenger ? passenger.p_name : "未知用户";
-        
-        // 2. 显示弹窗
+        this.passengerName = passenger ? passenger.p_name : "未登录用户";
         this.dialogFormVisible = true;
-      }).catch(() => {
-        this.$message.error("无法获取乘客信息，请重新登录");
       });
     },
-    // 对话框点击“确认支付”时触发
     confirmBooking() {
+      // 这里的接口会触发后端的“查票-改状态-创订单”事务
       this.request.get("/saveOrder/", {
         params: {
           p_id: this.p_id,
-          f_id: this.form.排班编号, // 注意后端接收的字段名
+          f_id: this.form.航班编号, 
           price: this.form.航班价格
         }
       }).then(res => {
-        this.$message.success("恭喜！订票成功");
+        this.$message.success("订票成功！");
         this.dialogFormVisible = false;
-        this.load(); // 重新加载列表，更新余票
+        this.load(); // 支付后刷新，触发数据库重新统计余票
       }).catch(err => {
-        this.$message.error("预订失败，请稍后再试");
+        this.$message.error("系统繁忙，请重试");
       })
     },
-    handleSizeChange(pageSize) { this.pageSize = pageSize; this.load(); },
-    handleCurrentChange(pageNum) { this.pageNum = pageNum; this.load(); },
+    handleSizeChange(val) { this.pageSize = val; this.load(); },
+    handleCurrentChange(val) { this.pageNum = val; this.load(); },
   }
 }
 </script>
 
 <style scoped>
+/* 容器及基础卡片 */
 .book-container { padding: 25px; background-color: #f6f8fb; min-height: 100vh; }
 .search-card { border-radius: 12px; margin-bottom: 20px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-.search-flex-bar { display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+.search-flex-bar { display: flex; align-items: center; gap: 12px; }
 .input-item { width: 180px; }
-.input-connector { color: #C0C4CC; font-size: 20px; transform: rotate(90deg); }
-.date-picker { width: 220px; }
+.input-connector { color: #C0C4CC; transform: rotate(90deg); }
 .button-group { margin-left: auto; }
 
-.route-display-container { display: flex; align-items: center; justify-content: center; width: 100%; padding: 10px 0; }
+/* 航线展示：灵感来自各大航司官网 */
+.route-display-container { display: flex; align-items: center; justify-content: center; width: 100%; }
 .route-station { flex: 1; display: flex; flex-direction: column; }
 .departure { text-align: right; }
 .arrival { text-align: left; }
-.station-time { font-size: 26px; font-weight: 800; color: #303133; }
-.station-name { font-size: 16px; font-weight: 600; color: #444; margin: 4px 0; }
+.station-time { font-size: 24px; font-weight: bold; color: #303133; }
+.station-name { font-size: 15px; font-weight: 500; margin: 2px 0; }
 .airport-info { font-size: 12px; color: #909399; }
 
-.route-axis { width: 110px; margin: 0 25px; display: flex; flex-direction: column; align-items: center; }
-.axis-tag { font-size: 11px; color: #409EFF; background: #ecf5ff; padding: 2px 8px; border-radius: 10px; margin-bottom: 5px; }
-.axis-line { width: 100%; height: 2px; background: #DCDFE6; position: relative; display: flex; align-items: center; justify-content: flex-end; }
-.arrow { color: #DCDFE6; position: absolute; right: -6px; font-size: 14px; }
+.route-axis { width: 120px; margin: 0 30px; display: flex; flex-direction: column; align-items: center; }
+.axis-tag { font-size: 10px; color: #409EFF; border: 1px solid #d9ecff; background: #ecf5ff; padding: 0 6px; border-radius: 4px; margin-bottom: 4px; }
+.axis-line { width: 100%; height: 2px; background: #E4E7ED; position: relative; }
+.arrow { position: absolute; right: -5px; top: -6px; color: #E4E7ED; font-size: 14px; }
 
-.flight-table { border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
-.price-value { color: #f5222d; font-size: 22px; font-weight: bold; }
+/* 表格及文字 */
+.flight-table { border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.04); }
 .flight-no { color: #409EFF; font-weight: bold; }
+.price-value { color: #f5222d; font-size: 22px; font-weight: bold; }
 .pagination-footer { margin-top: 25px; display: flex; justify-content: flex-end; }
 
-/* 弹窗样式 */
-.ticket-preview { background: #f8f9fb; padding: 15px; border-radius: 8px; }
-.preview-row { margin-bottom: 8px; font-size: 14px; }
-.preview-row .label { color: #909399; width: 60px; display: inline-block; }
-.preview-row .val { color: #303133; font-weight: bold; }
+/* 弹窗预览 */
+.ticket-preview { background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px dashed #DCDFE6; }
+.preview-row { margin-bottom: 10px; display: flex; justify-content: space-between; }
+.preview-row .label { color: #909399; }
+.preview-row .val { font-weight: bold; color: #303133; }
 .price-color { color: #f5222d; font-size: 18px; }
 </style>

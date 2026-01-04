@@ -490,9 +490,9 @@ def mget_ticket(request):
     for arrange in arranges:
         # 在 Ticket 表中统计该排班的售票情况
         # 统计“已售”：通常指状态不是“未支付”或“已退票”的
-        sold_count = Ticket.objects.filter(a=arrange).exclude(t_available='未支付').count()
+        sold_count = Ticket.objects.filter(a=arrange).exclude(t_available='Yes').count()
         # 统计“剩余”：状态为“未支付”（即可售状态）
-        available_count = Ticket.objects.filter(a=arrange, t_available='未支付').count()
+        available_count = Ticket.objects.filter(a=arrange, t_available='Yes').count()
 
         # 获取关联的航线信息
         train = arrange.f
