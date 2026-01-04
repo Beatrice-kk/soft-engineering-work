@@ -128,18 +128,14 @@ export default {
     },
 
     handleReset(id) {
-      this.request.get("/resetAccount/", {
-        params: { p_id: id }
-      }).then(res => {
+      resetAccount({ p_id: id }).then(res => {
         this.$message.success("密码重置成功");
         this.load();
       });
     },
 
     handleDel(p_id) {
-      this.request.get("/delAccount/", {
-        params: { p_id: p_id }
-      }).then(res => {
+      delAccount({ p_id: p_id }).then(res => {
         this.$message.success("用户已成功注销");
         this.load();
       });
@@ -147,11 +143,9 @@ export default {
 
     delBatch() {
       if (!this.multipleSelection.length) return;
-      
+
       let p_ids = this.multipleSelection.map(v => v.p_id).join(",");
-      this.request.get("/delAccountBatch", {
-        params: { p_ids: p_ids }
-      }).then(res => {
+      delAccountBatch({ p_ids: p_ids }).then(res => {
         this.$message.success(`成功批量删除 ${this.multipleSelection.length} 个账号`);
         this.load();
       }).catch(err => {
