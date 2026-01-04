@@ -36,7 +36,7 @@ class TicketTests(TestCase):
             a=self.arrange,
             t_id='TICKET001',
             t_seat='1A',
-            t_available='未支付',
+            t_available='Yes',
             p_take=None,
             p_pay=None,
             t_paytime=datetime.now()  # 设置一个默认的支付时间

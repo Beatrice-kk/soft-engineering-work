@@ -123,9 +123,32 @@ from django.http import JsonResponse
 from .models import Passenger
 
 
+# def change_profile(request):
+#     # 从GET请求的查询字符串中获取数据
+#     p_id = request.GET.get('p_id')
+#     new_data = {
+#         'p_name': request.GET.get('p_name'),
+#         'p_sex': request.GET.get('p_sex'),
+#         'p_age': request.GET.get('p_age'),
+#         'p_tel': request.GET.get('p_tel'),
+#         'p_card': request.GET.get('p_card'),
+#     }
+
+#     try:
+#         passenger = Passenger.objects.get(pk=p_id)
+#         # Update passenger's information here only if the new value is not None or empty string
+#         for key, value in new_data.items():
+#             if value:  # Check if the new value is not None or empty
+#                 setattr(passenger, key, value)  # Update attributes if they exist and value is not None or empty
+#         passenger.save()
+#         return JsonResponse({'status': 'success', 'message': '个人资料修改成功'})
+#     except Passenger.DoesNotExist:
+#         return JsonResponse({'status': 'error', 'message': '未发现账户'}, status=404)
 def change_profile(request):
-    # 从GET请求的查询字符串中获取数据
+    # 1. 获取 p_id
     p_id = request.GET.get('p_id')
+    
+    # 2. 定义需要更新的字段映射
     new_data = {
         'p_name': request.GET.get('p_name'),
         'p_sex': request.GET.get('p_sex'),
@@ -136,12 +159,27 @@ def change_profile(request):
 
     try:
         passenger = Passenger.objects.get(pk=p_id)
-        # Update passenger's information here only if the new value is not None or empty string
+        
+        # 3. 遍历更新字段
         for key, value in new_data.items():
-            if value:  # Check if the new value is not None or empty
-                setattr(passenger, key, value)  # Update attributes if they exist and value is not None or empty
+            if value:  # 只有当传入值不为空时才处理
+                
+                # --- 核心修复点：针对年龄字段进行数字校验 ---
+                if key == 'p_age':
+                    try:
+                        value = int(value) # 强制转换，失败会抛出 ValueError
+                    except ValueError:
+                        # 如果转换失败，返回测试脚本预期的 400 错误
+                        return JsonResponse({
+                            'status': 'error', 
+                            'message': '无效的输入数据'
+                        }, status=400)
+                
+                setattr(passenger, key, value)
+        
         passenger.save()
         return JsonResponse({'status': 'success', 'message': '个人资料修改成功'})
+
     except Passenger.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': '未发现账户'}, status=404)
 
