@@ -103,6 +103,8 @@
 </template>
 
 <script>
+import { getAccount, resetAccount, delAccount, delAccountBatch } from '@/api/account'
+
 export default {
   name: "account",
   data() {
@@ -117,9 +119,7 @@ export default {
   },
   methods: {
     load() {
-      this.request.get("/getAccount/", {
-        params: { username: this.username }
-      }).then(res => {
+      getAccount({ username: this.username }).then(res => {
         // 假设返回结构为 { accounts: [...] }
         this.tableData = res.accounts || [];
       }).catch(error => {
