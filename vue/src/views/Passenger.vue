@@ -109,6 +109,8 @@
 </template>
 
 <script>
+import { mgetPassenger, delPassenger, delPassengerBatch } from '@/api/passenger'
+
 export default {
   data() {
     return {
@@ -126,13 +128,11 @@ export default {
   },
   methods: {
     load() {
-      this.request.get("/mgetPassenger/", {
-        params: {
-          pageNum: this.pageNum,
-          pageSize: this.pageSize,
-          name: this.name,
-          phone: this.phone,
-        }
+      mgetPassenger({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        name: this.name,
+        phone: this.phone,
       }).then(res => {
         this.tableData = res.passengers || [];
         this.total = res.total || 0;
@@ -147,7 +147,7 @@ export default {
       this.load();
     },
     handleDel(p_id) {
-      this.request.get("/delPassenger/", { params: { p_id: p_id } }).then(res => {
+      delPassenger({ p_id: p_id }).then(res => {
         this.$message.success("信息已删除");
         this.load();
       });
@@ -155,7 +155,7 @@ export default {
     delBatch() {
       if (!this.multipleSelection.length) return;
       let p_ids = this.multipleSelection.map(v => v.p_id).join(",");
-      this.request.get("/delPassengerBatch", { params: { p_ids: p_ids } }).then(res => {
+      delPassengerBatch({ p_ids: p_ids }).then(res => {
         this.$message.success("批量删除成功");
         this.load();
       });
