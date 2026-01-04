@@ -328,30 +328,50 @@ from .models import Ticket
 
 def book_ticket(request):
     if request.method == "GET":
-        p_ids = request.GET.get('p_ids').split(',')  # 将接收到的字符串转回列表
+        p_ids_str = request.GET.get('p_ids', '')
         a_id = request.GET.get('a_id')
         p_main = request.GET.get('p_main')
-        print(a_id)
-        print(p_ids)
+
+        # 处理乘客ID列表（支持单个ID或逗号分隔的多个ID）
+        if ',' in p_ids_str:
+            p_ids = p_ids_str.split(',')
+        else:
+            p_ids = [p_ids_str] if p_ids_str else []
+
+        print(f"a_id: {a_id}")
+        print(f"p_ids: {p_ids}")
+        print(f"p_main: {p_main}")
+
+        if not a_id or not p_ids:
+            return JsonResponse({'message': 'Missing required parameters'}, status=400)
+
         try:
-            # 查找对应的Ticket
-            tickets = Ticket.objects.filter(a_id=a_id, t_available='未支付')
-            count = 0
+            # 查找可用的Ticket（状态为'Yes'表示可用）
+            available_tickets = Ticket.objects.filter(a_id=a_id, t_available='Yes')
+
+            # 检查是否有足够的可用票
+            if available_tickets.count() < len(p_ids):
+                return JsonResponse({'message': 'Not enough available tickets'}, status=400)
+
+            booked_count = 0
             for p_id in p_ids:
-                if tickets.filter(p_take=p_id).count()!=0:
-                    return JsonResponse({'message': 'Already'})
-                ticket = Ticket.objects.get(t_id=tickets[count].t_id)
+                # 检查该乘客是否已经预订了这个航班
+                if available_tickets.filter(p_take=p_id).exists():
+                    return JsonResponse({'message': 'Passenger already booked this flight'}, status=400)
+
+                # 获取一张可用票
+                ticket = available_tickets[booked_count]
                 ticket.p_take = p_id
                 ticket.t_available = '已预订'
                 ticket.p_pay = p_main
                 ticket.save()
-                count = count+1
+                booked_count += 1
 
             return JsonResponse({'message': 'Ticket booked successfully'})
 
-        except Ticket.DoesNotExist:
-            # 如果找不到Ticket，返回错误信息
-            return JsonResponse({'message': 'Ticket not found'}, status=404)
+        except Exception as e:
+            print(f"Booking error: {e}")
+            return JsonResponse({'message': 'Booking failed'}, status=500)
 
 
 def booked_tickets(request):
