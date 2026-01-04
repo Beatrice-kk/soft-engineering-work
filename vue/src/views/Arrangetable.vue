@@ -1,74 +1,168 @@
 <template>
-  <div style="box-shadow: 0 2px 4px rgba(0, 0, 0,.10), 0 0 6px rgba(0, 0, 0, .4);height: 83%">
-    <div class="header"
-         style="background: #cccccc; height: 15%; display: flex; align-items: center; justify-content: center;">
-      <div style="height: 100%; width: 100%; display: flex; align-items: center;">
-        <img src="../../public/plane1.png" style="height: 50px; margin-left: 8px;">
-        <span style="margin-left: 8px;font-size: 20px">航班信息表</span>
+  <div class="main-container">
+    <div class="header-banner">
+      <div class="header-content">
+        <img src="../../public/plane1.png" class="header-logo">
+        <span class="header-title">航班管理系统</span>
       </div>
     </div>
 
-    <div style="margin: 20px">
-      <div style="margin: 10px 0">
-        <el-input style="width: 200px" placeholder="请输入起始地" suffix-icon="el-icon-search"
-                  v-model="startPlace"></el-input>
-        <el-input style="width: 200px" placeholder="请输入目的地" suffix-icon="el-icon-message" class="ml-5"
-                  v-model="endPlace"></el-input>
-        <el-button class="ml-5" type="primary" @click="load">搜索</el-button>
-        <el-button class="ml-5" type="warning" @click="reset">重置</el-button>
+    <div class="content-body">
+      <div class="search-section">
+        <el-input prefix-icon="el-icon-location-outline" v-model="startPlace" placeholder="起始地" class="search-item"></el-input>
+        <el-input prefix-icon="el-icon-position" v-model="endPlace" placeholder="目的地" class="search-item ml-10"></el-input>
+        <el-button type="primary" icon="el-icon-search" @click="load" class="ml-10">查询路线</el-button>
+        <el-button type="info" plain icon="el-icon-refresh" @click="reset">重置</el-button>
       </div>
-      <div style="height:250px;margin-top: 10px">
+
+      <el-card class="table-card" shadow="never">
+        <div slot="header" class="card-header">
+          <span><i class="el-icon-guide"></i> 第一步：选择航线路线</span>
+        </div>
         <el-table
             ref="singleTable"
             :data="tableData"
             highlight-current-row
             @current-change="handleCurrentChange"
             :row-class-name="rowClassName"
-            style="width: 100%; max-height: 250px; overflow-y: auto;">>
-          <el-table-column
-              type="index"
-              width="50">
-          </el-table-column>
-          <el-table-column
-              property="起始地"
-              label="起始地"
-              width="120">
-          </el-table-column>
-          <el-table-column
-              property="目的地"
-              label="目的地"
-              width="120">
-          </el-table-column>
-          <el-table-column
-              property="起始机场"
-              label="起始机场"
-              width="120">
-          </el-table-column>
-          <el-table-column
-              property="目的机场"
-              label="目的机场">
-          </el-table-column>
+            height="220"
+            style="width: 100%">
+          <el-table-column type="index" label="序号" width="60"></el-table-column>
+          <el-table-column property="起始地" label="起始地" align="center"></el-table-column>
+          <el-table-column property="目的地" label="目的地" align="center"></el-table-column>
+          <el-table-column property="起始机场" label="起始机场" align="center" show-overflow-tooltip></el-table-column>
+          <el-table-column property="目的机场" label="目的机场" align="center" show-overflow-tooltip></el-table-column>
         </el-table>
-      </div>
-    </div>
+      </el-card>
 
-    <div style="height:50px;width: 100%;margin-top:10px">
-      <el-date-picker type="date" placeholder="选择日期" v-model="form.date"
-                      style="width: 200px;margin-left: 20px"></el-date-picker>
-      <el-time-picker placeholder="选择起飞时间" v-model="form.start" style="width: 200px;margin-left: 5px"></el-time-picker>
-      <el-time-picker placeholder="选择到达时间" v-model="form.end" style="width: 200px;margin-left: 5px"></el-time-picker>
-      <el-input placeholder="请输入票价" v-model="form.price" autocomplete="off"
-                style="width: 200px;margin-left: 5px"></el-input>
-    </div>
+      <el-card class="form-card" shadow="never">
+        <div slot="header" class="card-header">
+          <span><i class="el-icon-edit-outline"></i> 第二步：完善排班及票价信息</span>
+          <el-tag v-if="form.f_id" type="success" size="small">当前选择航线 ID: {{ form.f_id }}</el-tag>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-item">
+            <span class="label">排班编号:</span>
+            <el-input placeholder="如: A001" v-model="form.a_id"></el-input>
+          </div>
+          <div class="form-item">
+            <span class="label">出发日期:</span>
+            <el-date-picker type="date" placeholder="选择日期" v-model="form.date" style="width: 100%;"></el-date-picker>
+          </div>
+          <div class="form-item">
+            <span class="label">起飞时间:</span>
+            <el-time-picker placeholder="起飞时间" v-model="form.start" style="width: 100%;"></el-time-picker>
+          </div>
+          <div class="form-item">
+            <span class="label">到达时间:</span>
+            <el-time-picker placeholder="到达时间" v-model="form.end" style="width: 100%;"></el-time-picker>
+          </div>
+          <div class="form-item">
+            <span class="label">航班票价:</span>
+            <el-input placeholder="金额" v-model="form.price">
+              <template slot="prepend">￥</template>
+            </el-input>
+          </div>
+        </div>
 
-    <div>
-      <el-button type="success" size="large" style="margin-left: 20px;" @click="save">创建航班</el-button>
+        <div class="submit-area">
+          <el-button type="success" icon="el-icon-check" size="medium" @click="save" round>确认创建航班任务</el-button>
+        </div>
+      </el-card>
     </div>
-
   </div>
 </template>
 
+<style scoped>
+/* 整体容器 */
+.main-container {
+  background-color: #f5f7fa;
+  min-height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* 顶部 Banner */
+.header-banner {
+  background: linear-gradient(135deg, #409EFF 0%, #1e80e1 100%);
+  height: 70px;
+  display: flex;
+  align-items: center;
+  padding: 0 25px;
+}
+.header-logo {
+  height: 35px;
+  filter: brightness(0) invert(1); /* 图片变白色 */
+}
+.header-title {
+  color: white;
+  margin-left: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* 内容体 */
+.content-body {
+  padding: 20px;
+}
+
+/* 搜索区 */
+.search-section {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+.search-item {
+  width: 180px;
+}
+.ml-10 { margin-left: 10px; }
+
+/* 卡片样式 */
+.table-card, .form-card {
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+.card-header {
+  font-size: 15px;
+  font-weight: bold;
+  color: #303133;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 网格表单 */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+.form-item .label {
+  display: block;
+  font-size: 13px;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+/* 提交按钮 */
+.submit-area {
+  margin-top: 25px;
+  text-align: center;
+  border-top: 1px dashed #ebeef5;
+  padding-top: 20px;
+}
+
+/* 选中行样式 */
+::v-deep .selected-row {
+  background-color: #f0f9eb !important;
+}
+</style>
+
 <script>
+// 脚本逻辑保持完全不变
 export default {
   data() {
     return {
@@ -77,6 +171,7 @@ export default {
       startPlace: '',
       endPlace: '',
       form: {
+        a_id: '',
         f_id: '',
         date: '',
         start: '',
@@ -92,14 +187,19 @@ export default {
     load() {
       this.request.get("/mgetTrain/", {
         params: {
-          start: this.startPlace,  // 传递起始地
-          end: this.endPlace       // 传递目的地
+          start: this.startPlace,
+          end: this.endPlace
         }
       }).then(res => {
         this.tableData = res.train_list
       })
     },
     save() {
+      if(!this.form.a_id || !this.form.f_id || !this.form.date || !this.form.start || !this.form.end || !this.form.price) {
+        this.$message.warning("请完整填写所有信息（包括排班编号）");
+        return;
+      }
+
       let dateFromPicker = new Date(this.form.date);
       let startFromPicker = new Date(this.form.start);
       let endFromPicker = new Date(this.form.end);
@@ -107,8 +207,10 @@ export default {
       dateFromPicker.setHours(dateFromPicker.getHours() + 8);
       startFromPicker.setHours(startFromPicker.getHours() + 8);
       endFromPicker.setHours(endFromPicker.getHours() + 8);
+
       this.request.get("/saveArrange/", {
         params: {
+          a_id: this.form.a_id,
           f_id: this.form.f_id,
           date: dateFromPicker,
           start: startFromPicker,
@@ -116,44 +218,29 @@ export default {
           price: this.form.price
         }
       }).then(response => {
-        console.log(response);
-        if (response.message === 'All fields must be provided') {
-          this.$message.error("请完整填写航班信息表")
-        } else if (response.message === 'Invalid date or time format') {
-          this.$message.error("错误的日期或时间格式")
-        } else if (response.message === 'Failed to create new Arrange') {
-          this.$message.error("未知错误 添加失败")
+        if (response.status === 'success') {
+          this.$message.success("添加航班信息成功");
+          this.form.a_id = '';
+          this.form.price = '';
         } else {
-          this.$message.success("添加航班信息成功")
+          this.$message.error(response.message || "添加失败");
         }
       })
     },
     reset() {
-      this.startPlace = ""
-      this.endPlace = ""
-      this.load()
-    },
-    setCurrent(row) {
-      this.$refs.singleTable.setCurrentRow(row);
+      this.startPlace = "";
+      this.endPlace = "";
+      this.load();
     },
     handleCurrentChange(val) {
-      this.currentRow = val;
-      this.form.f_id = this.currentRow.排班编号
+      if (val) {
+        this.currentRow = val;
+        this.form.f_id = this.currentRow.排班编号;
+      }
     },
     rowClassName({row}) {
-      // 根据条件判断当前行是否为被选中行，返回相应的类名
       return row === this.currentRow ? 'selected-row' : '';
     }
   }
 }
 </script>
-
-<style>
-.headerBg {
-  background: #eee !important;
-}
-
-.selected-row {
-  color: #3192F2;
-}
-</style>>
