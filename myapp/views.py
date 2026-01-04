@@ -719,15 +719,33 @@ def save_train(request):
     startField = request.GET.get('startField')
     endField = request.GET.get('endField')
 
-    # 创建并保存新的排班对象
+    # 生成唯一的 f_id
+    try:
+        # 获取现有的最大 f_id 编号
+        existing_trains = Train.objects.filter(f_id__regex=r'^F\d+$').order_by('-f_id')
+        if existing_trains.exists():
+            last_f_id = existing_trains.first().f_id
+            # 提取数字部分并递增
+            last_num = int(last_f_id[1:])  # 去掉'F'前缀
+            new_num = last_num + 1
+        else:
+            new_num = 1
+        f_id = f"F{new_num:03d}"  # 格式化为 F001, F002 等
+    except Exception:
+        # 如果查询失败，使用时间戳作为后备
+        import time
+        f_id = f"F{int(time.time())}"
+
+    # 创建并保存新的火车对象
     try:
         train = Train.objects.create(
-            startPlace=startPlace,
-            endPlace=endPlace,
-            startField=startField,
-            endField=endField
+            f_id=f_id,
+            f_s_place=startPlace,
+            f_e_place=endPlace,
+            f_s_airfield=startField,
+            f_e_airfield=endField
         )
-        return JsonResponse({'status': 'success', 'message': 'Train created successfully'})
+        return JsonResponse({'status': 'success', 'message': 'Train created successfully', 'f_id': f_id})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
 
