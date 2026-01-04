@@ -10,6 +10,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.forms.models import model_to_dict
 import json
 from django.db.models import Max
+from django.db import transaction
 import os
 from myapp.models import ManagerAccount, PassengerAccount, Passenger, Relationships, Ticket, Train, Arrange, Stop
 
@@ -464,71 +465,65 @@ def order_tickets(request):
 
 
 def mget_ticket(request):
-    # 获取前端发送的参数
+    # 1. 获取前端发送的分页和筛选参数
     page_num = request.GET.get('pageNum', 1)
     page_size = request.GET.get('pageSize', 10)
-    start = request.GET.get('start', '')
-    end = request.GET.get('end', '')
-    date = request.GET.get('date', '')  # YYYY-MM-DD format
+    start_place = request.GET.get('start', '')
+    end_place = request.GET.get('end', '')
+    date_val = request.GET.get('date', '')
 
-    # 构建筛选条件
-    ticket_filters = Q()
-    if start:
-        ticket_filters &= Q(a__f__f_s_place=start)
-    if end:
-        ticket_filters &= Q(a__f__f_e_place=end)
+    # 2. 构建针对 Arrange (排班表) 的筛选条件
+    # 注意：f__f_s_place 是通过 Arrange 中的外键 f 关联到 Train 表的字段
+    arrange_filters = Q()
+    if start_place:
+        arrange_filters &= Q(f__f_s_place__icontains=start_place)
+    if end_place:
+        arrange_filters &= Q(f__f_e_place__icontains=end_place)
+    if date_val:
+        arrange_filters &= Q(a_date=date_val)
 
-    # 应用筛选条件到Ticket模型
-    tickets = Ticket.objects.filter(ticket_filters)
+    # 3. 执行查询并优化性能 (使用 select_related 减少 SQL 查询次数)
+    arranges = Arrange.objects.filter(arrange_filters).select_related('f').order_by('a_date', 'a_s_time')
 
-    # 如果日期筛选有效，则进一步过滤Arrange模型
-    if date:
-        arrange_ids = Arrange.objects.filter(a_date=date).values_list('a_id', flat=True)
-        tickets = tickets.filter(a_id__in=arrange_ids)
-
-    # 初始化ticket_data字典
-    ticket_data = {}
-    for ticket in tickets:
-        if ticket.a_id not in ticket_data:
-            ticket_data[ticket.a_id] = {
-                'sold_count': 0,
-                'available_count': 0,
-            }
-        if ticket.t_available == '未支付':
-            ticket_data[ticket.a_id]['available_count'] += 1
-        else:
-            ticket_data[ticket.a_id]['sold_count'] += 1
-
-    # 创建空列表来存放最后的数据
+    # 4. 构造数据列表
     ticket_list = []
-    for a_id, counts in ticket_data.items():
-        arrange = Arrange.objects.get(a_id=a_id)
-        train = Train.objects.get(f_id=arrange.f_id)
+    for arrange in arranges:
+        # 在 Ticket 表中统计该排班的售票情况
+        # 统计“已售”：通常指状态不是“未支付”或“已退票”的
+        sold_count = Ticket.objects.filter(a=arrange).exclude(t_available='未支付').count()
+        # 统计“剩余”：状态为“未支付”（即可售状态）
+        available_count = Ticket.objects.filter(a=arrange, t_available='未支付').count()
+
+        # 获取关联的航线信息
+        train = arrange.f
 
         ticket_list.append({
-            "航班编号": arrange.a_id,
-            '排班编号': train.f_id,
+            "航班编号": arrange.a_id,      # 对应前端的 a_id
+            '排班编号': train.f_id,        # 对应前端的 f_id
             '起始地': train.f_s_place,
             '目的地': train.f_e_place,
             '起始机场': train.f_s_airfield,
             '目的机场': train.f_e_airfield,
-            '起飞时间': arrange.a_s_time,
-            '到达时间': arrange.a_e_time,
-            '航班价格': arrange.price,
-            '日期': arrange.a_date,
-            '已售': counts['sold_count'],
-            '剩余': counts['available_count']
+            '起飞时间': arrange.a_s_time.strftime("%H:%M:%S") if arrange.a_s_time else "",
+            '到达时间': arrange.a_e_time.strftime("%H:%M:%S") if arrange.a_e_time else "",
+            '航班价格': str(arrange.price), # Decimal类型转为字符串，防止JSON序列化失败
+            '日期': arrange.a_date.strftime("%Y-%m-%d") if arrange.a_date else "",
+            '已售': sold_count,
+            '剩余': available_count
         })
 
-    # 分页处理
-    paginator = Paginator(ticket_list, int(page_size))
-    page = paginator.get_page(int(page_num))
+    # 5. 分页处理
+    try:
+        paginator = Paginator(ticket_list, int(page_size))
+        page = paginator.get_page(int(page_num))
+        
+        data = {
+            'tickets': list(page.object_list),
+            'total': paginator.count
+        }
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-    # 构造返回结果
-    data = {
-        'tickets': list(page.object_list),
-        'total': paginator.count
-    }
     return JsonResponse(data)
 
 
@@ -644,38 +639,70 @@ def mget_train(request):
 
 
 def save_arrange(request):
+    # 1. 获取参数
+    a_id = request.GET.get('a_id', '')
     f_id = request.GET.get('f_id', '')
     date_str = request.GET.get('date', '')
     start_time_str = request.GET.get('start', '')
     end_time_str = request.GET.get('end', '')
     price = request.GET.get('price', '')
-    print(f_id)
-    print(date_str)
-    print(start_time_str)
-    print(end_time_str)
-    print(price)
-    if not all([f_id, date_str, start_time_str, end_time_str, price]):
-        return JsonResponse({'status': 'error', 'message': 'All fields must be provided'})
 
+    if not all([a_id, f_id, date_str, start_time_str, end_time_str, price]):
+        return JsonResponse({'status': 'error', 'message': '字段不完整'})
+
+    # 2. 查重 (解决 Duplicate entry 错误)
+    if Arrange.objects.filter(a_id=a_id).exists():
+        return JsonResponse({'status': 'error', 'message': f'编号 {a_id} 已存在'})
+
+    # 3. 解析日期时间
     try:
         date = datetime.strptime(date_str[:10], "%Y-%m-%d").date()
         start_time = datetime.strptime(start_time_str[11:16], "%H:%M").time()
         end_time = datetime.strptime(end_time_str[11:16], "%H:%M").time()
-    except ValueError as e:
-        return JsonResponse({'status': 'error', 'message': 'Invalid date or time format', 'error': str(e)})
-
-    try:
-        arrange = Arrange.objects.create(
-            f_id=f_id,
-            a_date=date,
-            a_s_time=start_time,
-            a_e_time=end_time,
-            price=price
-        )
-        return JsonResponse({'status': 'success', 'message': 'New Arrange created', 'arrange_id': arrange.a_id})
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': 'Failed to create new Arrange', 'error': str(e)})
+        return JsonResponse({'status': 'error', 'message': '时间解析失败'})
 
+    # 4. 数据库事务操作
+    try:
+        with transaction.atomic():
+            # A. 创建排班
+            arrange = Arrange.objects.create(
+                a_id=a_id,
+                f_id=f_id,
+                a_date=date,
+                a_s_time=start_time,
+                a_e_time=end_time,
+                price=price
+            )
+
+            # B. 批量生成机票
+            tickets_list = []
+            current_now = timezone.now() # 获取当前时间作为默认支付时间占位
+            
+            for i in range(1, 11): 
+                ticket_id = f"T-{a_id}-{i:02d}"
+                seat_name = f"{i}A"
+                
+                tickets_list.append(Ticket(
+                    t_id=ticket_id,
+                    a_id=a_id,
+                    t_seat=seat_name,
+                    t_available='Yes',
+                    p_take='No',
+                    p_pay='No',
+                    # 【核心修复】解决 t_paytime cannot be null 报错
+                    # 给一个当前时间作为初始值
+                    t_paytime=current_now 
+                ))
+            
+            Ticket.objects.bulk_create(tickets_list)
+
+        return JsonResponse({'status': 'success', 'message': '航班及机票成功存入数据库！'})
+
+    except Exception as e:
+        # 打印详细报错到控制台，方便调试
+        print(f"DEBUG ERROR: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': f'数据库创建失败: {str(e)}'})
 
 def change_train(request):
     f_id = request.GET.get('f_id')
@@ -714,6 +741,7 @@ def del_train(request):
 
 def save_train(request):
     # 从GET请求中获取参数
+    f_id = request.GET.get('f_id')
     startPlace = request.GET.get('startPlace')
     endPlace = request.GET.get('endPlace')
     startField = request.GET.get('startField')
@@ -722,10 +750,11 @@ def save_train(request):
     # 创建并保存新的排班对象
     try:
         train = Train.objects.create(
-            startPlace=startPlace,
-            endPlace=endPlace,
-            startField=startField,
-            endField=endField
+            f_id=f_id,
+            f_s_place=startPlace,
+            f_e_place=endPlace,
+            f_s_airfield=startField,
+            f_e_airfield=endField
         )
         return JsonResponse({'status': 'success', 'message': 'Train created successfully'})
     except Exception as e:
