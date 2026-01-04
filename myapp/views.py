@@ -437,8 +437,8 @@ def cancel_ticket(request):
     try:
         # 查找对应的Ticket对象
         ticket = Ticket.objects.get(t_id=t_id)
-        ticket.p_take = ""
-        ticket.p_pay = ""
+        ticket.p_take = "Yes"
+        ticket.p_pay = "No"
         ticket.t_available = "未支付"
         ticket.save()  # 保存更改
 
