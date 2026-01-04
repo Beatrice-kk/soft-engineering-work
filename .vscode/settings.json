@@ -1,5 +1,12 @@
 {
-  "python-envs.defaultEnvManager": "ms-python.python:conda",
-  "python-envs.defaultPackageManager": "ms-python.python:conda",
-  "python-envs.pythonProjects": []
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    "python-envs.pythonProjects": []
+    // "python-envs.pythonProjects": [
+    //   {
+    //     "name": "Python",
+    //     "path": "C:\\Users\\jonat\\AppData\\Local\\Programs\\Python\\Python37",
+    //     "type": "python"
+    //   }
+    // ]
 }
