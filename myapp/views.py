@@ -328,30 +328,50 @@ from .models import Ticket
 
 def book_ticket(request):
     if request.method == "GET":
-        p_ids = request.GET.get('p_ids').split(',')  # 将接收到的字符串转回列表
+        p_ids_str = request.GET.get('p_ids', '')
         a_id = request.GET.get('a_id')
         p_main = request.GET.get('p_main')
-        print(a_id)
-        print(p_ids)
+
+        # 处理乘客ID列表（支持单个ID或逗号分隔的多个ID）
+        if ',' in p_ids_str:
+            p_ids = p_ids_str.split(',')
+        else:
+            p_ids = [p_ids_str] if p_ids_str else []
+
+        print(f"a_id: {a_id}")
+        print(f"p_ids: {p_ids}")
+        print(f"p_main: {p_main}")
+
+        if not a_id or not p_ids:
+            return JsonResponse({'message': 'Missing required parameters'}, status=400)
+
         try:
-            # 查找对应的Ticket
-            tickets = Ticket.objects.filter(a_id=a_id, t_available='未支付')
-            count = 0
+            # 查找可用的Ticket（状态为'Yes'表示可用）
+            available_tickets = Ticket.objects.filter(a_id=a_id, t_available='未支付')
+
+            # 检查是否有足够的可用票
+            if available_tickets.count() < len(p_ids):
+                return JsonResponse({'message': 'Not enough available tickets'}, status=400)
+
+            booked_count = 0
             for p_id in p_ids:
-                if tickets.filter(p_take=p_id).count()!=0:
-                    return JsonResponse({'message': 'Already'})
-                ticket = Ticket.objects.get(t_id=tickets[count].t_id)
+                # 检查该乘客是否已经预订了这个航班
+                if available_tickets.filter(p_take=p_id).exists():
+                    return JsonResponse({'message': 'Passenger already booked this flight'}, status=400)
+
+                # 获取一张可用票
+                ticket = available_tickets[booked_count]
                 ticket.p_take = p_id
                 ticket.t_available = '已预订'
                 ticket.p_pay = p_main
                 ticket.save()
-                count = count+1
+                booked_count += 1
 
             return JsonResponse({'message': 'Ticket booked successfully'})
 
-        except Ticket.DoesNotExist:
-            # 如果找不到Ticket，返回错误信息
-            return JsonResponse({'message': 'Ticket not found'}, status=404)
+        except Exception as e:
+            print(f"Booking error: {e}")
+            return JsonResponse({'message': 'Booking failed'}, status=500)
 
 
 def booked_tickets(request):
@@ -398,9 +418,9 @@ def purchase_ticket(request):
     try:
         # 查找对应的Ticket对象
         ticket = Ticket.objects.get(t_id=t_id)
-        # 更新Ticket的支付时间为当前时间，状态为'已支付'
+        # 更新Ticket的支付时间为当前时间，状态为'已预订'
         ticket.t_paytime = timezone.now()+ timedelta(hours=8)
-        ticket.t_available = "已支付"
+        ticket.t_available = "已预订"
         ticket.save()  # 保存更改
 
         return JsonResponse({'message': 'Ticket purchased successfully'})
@@ -417,8 +437,8 @@ def cancel_ticket(request):
     try:
         # 查找对应的Ticket对象
         ticket = Ticket.objects.get(t_id=t_id)
-        ticket.p_take = ""
-        ticket.p_pay = ""
+        ticket.p_take = "Yes"
+        ticket.p_pay = "No"
         ticket.t_available = "未支付"
         ticket.save()  # 保存更改
 
@@ -438,7 +458,7 @@ def order_tickets(request):
         passenger = Passenger.objects.get(p_id=p_id)
     except Passenger.DoesNotExist:
         return JsonResponse({'message': 'Passenger not found'}, status=404)
-    tickets = Ticket.objects.filter(p_pay=passenger.p_id, t_available="已支付")
+    tickets = Ticket.objects.filter(p_pay=passenger.p_id, t_available="已预订")
 
     ticket_list = []
     for ticket in tickets:
@@ -490,9 +510,9 @@ def mget_ticket(request):
     for arrange in arranges:
         # 在 Ticket 表中统计该排班的售票情况
         # 统计“已售”：通常指状态不是“未支付”或“已退票”的
-        sold_count = Ticket.objects.filter(a=arrange).exclude(t_available='Yes').count()
+        sold_count = Ticket.objects.filter(a=arrange).exclude(t_available='未支付').count()
         # 统计“剩余”：状态为“未支付”（即可售状态）
-        available_count = Ticket.objects.filter(a=arrange, t_available='Yes').count()
+        available_count = Ticket.objects.filter(a=arrange, t_available='未支付').count()
 
         # 获取关联的航线信息
         train = arrange.f
@@ -687,7 +707,7 @@ def save_arrange(request):
                     t_id=ticket_id,
                     a_id=a_id,
                     t_seat=seat_name,
-                    t_available='Yes',
+                    t_available='未支付',
                     p_take='No',
                     p_pay='No',
                     # 【核心修复】解决 t_paytime cannot be null 报错
@@ -1021,7 +1041,7 @@ def getSchedule(request):
         ]
         return JsonResponse({'res': result})
     else:
-        tickets = Ticket.objects.filter(p_pay=p_id,t_available='已支付')
+        tickets = Ticket.objects.filter(p_pay=p_id,t_available='已预订')
         arrangelist = set()
         for ticket in tickets:
             arrangelist.add(ticket.a_id)

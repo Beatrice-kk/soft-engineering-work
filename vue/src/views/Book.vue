@@ -199,11 +199,11 @@ export default {
     },
     confirmBooking() {
       // 这里的接口会触发后端的“查票-改状态-创订单”事务
-      this.request.get("/saveOrder/", {
+      this.request.get("/book/", {
         params: {
-          p_id: this.p_id,
-          f_id: this.form.航班编号, 
-          price: this.form.航班价格
+          p_ids: this.p_id,  // 单个乘客ID，后端会处理为列表
+          a_id: this.form.航班编号,  // 排班ID
+          p_main: this.p_id  // 主乘客ID（付款人）
         }
       }).then(res => {
         this.$message.success("订票成功！");
