@@ -68,6 +68,8 @@
 </template>
 
 <script>
+import { register } from '@/api/auth'
+
 export default {
   name: "register",
   data() {
@@ -107,7 +109,7 @@ export default {
     register() {
       this.$refs['ruleForm'].validate((valid) => {
         if (valid) {
-          this.request.post("/register/", this.ruleForm).then(res => {
+          register(this.ruleForm).then(res => {
             if (res.res === 3) {
               this.$message.success("注册成功");
               this.$router.push("/login");

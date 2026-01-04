@@ -113,6 +113,8 @@
 </template>
 
 <script>
+import { getTicket, delTicket, getTicketMore, delTicketBatch } from '@/api/ticket'
+
 export default {
   data() {
     return {
@@ -143,15 +145,13 @@ export default {
   },
   methods: {
     load() {
-      this.request.get("/getTicket/", {
-        params: {
-          pageNum: this.pageNum,
-          pageSize: this.pageSize,
-          start: this.start,
-          end: this.end,
-          date: this.date,
-          status: this.value
-        }
+      getTicket({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        start: this.start,
+        end: this.end,
+        date: this.date,
+        status: this.value
       }).then(res => {
         // 假设服务器返回的数据格式是 { tickets: [], total: 0 }
         // 分页查询航班信息给tabledata和total赋值
@@ -176,10 +176,8 @@ export default {
       this.form = {}
     },
     handleDel(t_id) {
-      this.request.get("/delTicket/", {
-        params: {
-          t_id: t_id,
-        }
+      delTicket({
+        t_id: t_id,
       }).then(res => {
         this.load()
         this.$message.success("航班删除成功")
@@ -188,10 +186,8 @@ export default {
     moreInfo(row) {
       this.form = row//已经绑定过save（）
       this.select = row.航班编号
-      this.request.get("/getTicketMore/", {
-        params: {
-          t_id: this.select,
-        }
+      getTicketMore({
+        t_id: this.select,
       }).then(res => {
         this.form.t_name = res.p_name;
         this.form.p_name = res.p_account;
@@ -202,10 +198,8 @@ export default {
     },
     delBatch() {
       let t_ids = this.multipleSelection.map(v => v.航班编号).join(",");
-      this.request.get("/delTicketBatch/", {
-        params: {
-          t_ids: t_ids,
-        }
+      delTicketBatch({
+        t_ids: t_ids,
       }).then(res => {
         this.load()
         this.$message.success("航班批量删除成功")

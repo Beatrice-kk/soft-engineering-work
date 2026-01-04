@@ -72,6 +72,8 @@
 </template>
 
 <script>
+import { getTrain, changeTrain, delTrain } from '@/api/train'
+
 export default {
   data() {
     return {
@@ -93,13 +95,11 @@ export default {
   },
   methods: {
     load() {
-      this.request.get("/getTrain/", {
-        params: {
-          pageNum: this.pageNum,
-          pageSize: this.pageSize,
-          start: this.start,
-          end: this.end,
-        }
+      getTrain({
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        start: this.start,
+        end: this.end,
       }).then(res => {
         this.tableData = res.train_list; // 更新航班数据
         this.total = res.total; // 更新总数据量
@@ -117,12 +117,10 @@ export default {
     },
     save() {
       console.log("Saving:", this.select, this.form.startField, this.form.endField); // 添加日志以确认值
-      this.request.get("/changeTrain/", {
-        params: {
-          f_id: this.select,
-          startField: this.form.起始机场,  // 注意这里改成了 this.form.startField
-          endField: this.form.目的机场,      // 注意这里改成了 this.form.endField
-        }
+      changeTrain({
+        f_id: this.select,
+        startField: this.form.起始机场,  // 注意这里改成了 this.form.startField
+        endField: this.form.目的机场,      // 注意这里改成了 this.form.endField
       }).then(res => {
         console.log("Save successful:", res); // 添加成功日志
         this.load()
@@ -133,10 +131,8 @@ export default {
       });
     },
     handleDel(f_id) {
-      this.request.get("/delTrain/", {
-        params: {
-          f_id: f_id
-        }
+      delTrain({
+        f_id: f_id
       }).then(res => {
         this.reset()
       })

@@ -50,6 +50,7 @@
 
 <script>
 import Vcode from "vue-puzzle-vcode";
+import { login } from '@/api/auth'
 
 export default {
   name: "Login",
@@ -73,8 +74,9 @@ export default {
     login() {
       this.$refs['userForm'].validate((valid) => {
         if (valid) {
-          this.axios.get("/login", {
-            params: { name: this.ruleForm.username, pass: this.ruleForm.password }
+          login({
+            name: this.ruleForm.username,
+            pass: this.ruleForm.password
           }).then((response) => {
             if (response.res === 0) {
               this.$message.error("用户名不存在或密码错误");
