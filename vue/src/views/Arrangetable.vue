@@ -37,13 +37,13 @@
 
       <el-card class="form-card" shadow="never">
         <div slot="header" class="card-header">
-          <span><i class="el-icon-edit-outline"></i> 第二步：完善排班及票价信息</span>
+          <span><i class="el-icon-edit-outline"></i> 第二步：完善航线及票价信息</span>
           <el-tag v-if="form.f_id" type="success" size="small">当前选择航线 ID: {{ form.f_id }}</el-tag>
         </div>
         
         <div class="form-grid">
           <div class="form-item">
-            <span class="label">排班编号:</span>
+            <span class="label">航线编号:</span>
             <el-input placeholder="如: A001" v-model="form.a_id"></el-input>
           </div>
           <div class="form-item">
@@ -196,7 +196,7 @@ export default {
     },
     save() {
       if(!this.form.a_id || !this.form.f_id || !this.form.date || !this.form.start || !this.form.end || !this.form.price) {
-        this.$message.warning("请完整填写所有信息（包括排班编号）");
+        this.$message.warning("请完整填写所有信息（包括航线编号）");
         return;
       }
 
@@ -235,7 +235,7 @@ export default {
     handleCurrentChange(val) {
       if (val) {
         this.currentRow = val;
-        this.form.f_id = this.currentRow.排班编号;
+        this.form.f_id = this.currentRow.航线编号;
       }
     },
     rowClassName({row}) {

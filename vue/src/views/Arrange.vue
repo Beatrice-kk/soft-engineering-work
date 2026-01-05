@@ -75,7 +75,7 @@
           <el-popconfirm
             confirm-button-text='确定'
             cancel-button-text='取消'
-            title="确定下架该航班排班吗？"
+            title="确定下架该航班航线吗？"
             @confirm="handleDel(scope.row.航班编号)"
           >
             <el-button type="text" size="small" icon="el-icon-delete" slot="reference" style="color: #F56C6C">删除</el-button>

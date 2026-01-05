@@ -15,8 +15,8 @@ const routes = [
 
       { path: 'arrange', name: '航班信息', component: () => import('../views/Arrange.vue') },
       { path: 'arrangetable', name: '增加航班', component: () => import('../views/Arrangetable.vue') },
-      { path: 'train', name: '排班信息', component: () => import('../views/Train.vue') },
-      { path: 'traintable', name: '增加排班', component: () => import('../views/Traintable.vue') },
+      { path: 'train', name: '航线信息', component: () => import('../views/Train.vue') },
+      { path: 'traintable', name: '增加航线', component: () => import('../views/Traintable.vue') },
       { path: 'Ticket', name: '航班信息', component: () => import('../views/Ticket.vue') },
       { path: 'passenger', name: '用户信息', component: () => import('../views/Passenger.vue') },
       { path: 'account', name: '用户账号', component: () => import('../views/Account.vue') },

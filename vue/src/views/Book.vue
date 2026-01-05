@@ -202,7 +202,7 @@ export default {
       this.request.get("/book/", {
         params: {
           p_ids: this.p_id,  // 单个乘客ID，后端会处理为列表
-          a_id: this.form.航班编号,  // 排班ID
+          a_id: this.form.航班编号,  // 航线ID
           p_main: this.p_id  // 主乘客ID（付款人）
         }
       }).then(res => {

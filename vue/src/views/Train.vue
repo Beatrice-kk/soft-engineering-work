@@ -31,9 +31,9 @@
         style="width: 100%"
       >
         <el-table-column type="selection" width="55" align="center"></el-table-column>
-        <el-table-column prop="排班编号" label="排班编号" width="120">
+        <el-table-column prop="航线编号" label="航线编号" width="120">
           <template v-slot="scope">
-            <el-tag size="small" effect="plain">{{ scope.row.排班编号 }}</el-tag>
+            <el-tag size="small" effect="plain">{{ scope.row.航线编号 }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="起始地" label="起始地" align="center"></el-table-column>
@@ -55,8 +55,8 @@
               cancel-button-text='取消'
               icon="el-icon-warning"
               icon-color="#f56c6c"
-              title="确定要删除这条排班记录吗？"
-              @confirm="handleDel(scope.row.排班编号)"
+              title="确定要删除这条航线记录吗？"
+              @confirm="handleDel(scope.row.航线编号)"
               class="ml-10"
             >
               <el-button 
@@ -86,13 +86,13 @@
     </el-card>
 
     <el-dialog 
-      title="修改排班详细信息" 
+      title="修改航线详细信息" 
       :visible.sync="dialogFormVisible" 
       width="35%"
       custom-class="custom-dialog"
     >
       <el-form :model="form" label-width="100px" size="medium">
-        <el-form-item label="排班编号">
+        <el-form-item label="航线编号">
           <el-input v-model="select" disabled prefix-icon="el-icon-key"></el-input>
         </el-form-item>
         <el-form-item label="起始机场">
@@ -213,7 +213,7 @@ export default {
       }).then(res => {
         this.load()
         this.dialogFormVisible = false
-        this.$message.success("排班信息修改成功")
+        this.$message.success("航线信息修改成功")
       })
     },
     handleDel(f_id) {
@@ -227,7 +227,7 @@ export default {
     handleEdit(row) {
       this.dialogFormVisible = true
       this.form = Object.assign({}, row); // 使用拷贝防止直接修改表格数据
-      this.select = row.排班编号
+      this.select = row.航线编号
     },
     handleSizeChange(pageSize) {
       this.pageSize = pageSize

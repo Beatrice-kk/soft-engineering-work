@@ -40,15 +40,15 @@
       <el-submenu index="2">
         <template slot="title">
           <i class="el-icon-s-promotion"></i>
-          <span slot="title">排班信息管理</span>
+          <span slot="title">航线信息管理</span>
         </template>
         <el-menu-item index="/train">
           <i class="el-icon-tickets"></i>
-          <span>排班信息总览</span>
+          <span>航线信息总览</span>
         </el-menu-item>
         <el-menu-item index="/traintable">
           <i class="el-icon-edit-outline"></i>
-          <span>添加排班信息</span>
+          <span>添加航线信息</span>
         </el-menu-item>
       </el-submenu>
 

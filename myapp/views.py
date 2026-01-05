@@ -530,7 +530,7 @@ def mget_ticket(request):
     end_place = request.GET.get('end', '')
     date_val = request.GET.get('date', '')
 
-    # 2. 构建针对 Arrange (排班表) 的筛选条件
+    # 2. 构建针对 Arrange (航线表) 的筛选条件
     # 注意：f__f_s_place 是通过 Arrange 中的外键 f 关联到 Train 表的字段
     arrange_filters = Q()
     if start_place:
@@ -546,7 +546,7 @@ def mget_ticket(request):
     # 4. 构造数据列表
     ticket_list = []
     for arrange in arranges:
-        # 在 Ticket 表中统计该排班的售票情况
+        # 在 Ticket 表中统计该航线的售票情况
         # 统计“已售”：通常指状态不是“未支付”或“已退票”的
         sold_count = Ticket.objects.filter(a=arrange).exclude(t_available='Yes').count()
         # 统计“剩余”：状态为“未支付”（即可售状态）
@@ -557,7 +557,7 @@ def mget_ticket(request):
 
         ticket_list.append({
             "航班编号": arrange.a_id,      # 对应前端的 a_id
-            '排班编号': train.f_id,        # 对应前端的 f_id
+            '航线编号': train.f_id,        # 对应前端的 f_id
             '起始地': train.f_s_place,
             '目的地': train.f_e_place,
             '起始机场': train.f_s_airfield,
@@ -647,7 +647,7 @@ def get_train(request):
     train_list = []
     for train in page_obj:
         train_info = {
-            '排班编号': train.f_id,
+            '航线编号': train.f_id,
             '起始地': train.f_s_place,
             '目的地': train.f_e_place,
             '起始机场': train.f_s_airfield,
@@ -682,7 +682,7 @@ def mget_train(request):
     train_list = []
     for train in trains:
         train_info = {
-            '排班编号': train.f_id,
+            '航线编号': train.f_id,
             '起始地': train.f_s_place,
             '目的地': train.f_e_place,
             '起始机场': train.f_s_airfield,
@@ -723,7 +723,7 @@ def save_arrange(request):
     # 4. 数据库事务操作
     try:
         with transaction.atomic():
-            # A. 创建排班
+            # A. 创建航线
             arrange = Arrange.objects.create(
                 a_id=a_id,
                 f_id=f_id,
@@ -805,7 +805,7 @@ def save_train(request):
     startField = request.GET.get('startField')
     endField = request.GET.get('endField')
 
-    # 创建并保存新的排班对象
+    # 创建并保存新的航线对象
     try:
         train = Train.objects.create(
             f_id=f_id,
@@ -849,7 +849,7 @@ def get_ticket(request):
         train = arrange.f
 
         ticket_list.append({
-            "排班编号": arrange.a_id,
+            "航线编号": arrange.a_id,
             '航班编号': train.f_id,
             '航班编号': ticket.t_id,
             '起始地': train.f_s_place,
